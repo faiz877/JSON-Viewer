@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react"
 import JsonNode from './JsonNode';
 
+import { useEffect, useState } from "react"
+import JsonNode from './JsonNode';
+
+interface Tab {
+  id: string;
+  name: string;
+  json: string;
+  isCollapsed: boolean;
+}
+
 function App() {
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -36,10 +46,10 @@ function App() {
     },
   };
 
-  const currentTheme = themes[theme];
+  const currentTheme = themes[theme as keyof typeof themes];
 
   // Tab system state
-  const [tabs, setTabs] = useState(() => {
+  const [tabs, setTabs] = useState<Tab[]>(() => {
     const savedTabs = localStorage.getItem('tabs');
     if (savedTabs) {
       return JSON.parse(savedTabs);
@@ -59,7 +69,7 @@ function App() {
     localStorage.setItem('activeTabId', activeTabId);
   }, [tabs, activeTabId]);
 
-  const handleJsonChange = (json) => {
+  const handleJsonChange = (json: string) => {
     const newTabs = tabs.map(tab => {
       if (tab.id === activeTabId) {
         return { ...tab, json };
@@ -69,7 +79,7 @@ function App() {
     setTabs(newTabs);
   };
 
-  const handleCollapseChange = (isCollapsed) => {
+  const handleCollapseChange = (isCollapsed: boolean) => {
     const newTabs = tabs.map(tab => {
       if (tab.id === activeTabId) {
         return { ...tab, isCollapsed };
@@ -86,12 +96,12 @@ function App() {
         return match ? parseInt(match[1], 10) : 0;
     });
     const newTabNumber = Math.max(0, ...tabNumbers) + 1;
-    const newTab = { id: newTabId, name: `Tab ${newTabNumber}`, json: '', isCollapsed: false };
+    const newTab: Tab = { id: newTabId, name: `Tab ${newTabNumber}`, json: '', isCollapsed: false };
     setTabs([...tabs, newTab]);
     setActiveTabId(newTabId);
   };
 
-  const closeTab = (tabId) => {
+  const closeTab = (tabId: string) => {
     const tabIndex = tabs.findIndex(tab => tab.id === tabId);
     const newTabs = tabs.filter(tab => tab.id !== tabId);
 
