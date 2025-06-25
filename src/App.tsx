@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import JsonNode from './JsonNode';
 
 interface Tab {
@@ -8,10 +8,15 @@ interface Tab {
   isCollapsed: boolean;
 }
 
+type Theme = 'light' | 'dark';
+
 function App() {
-  const [theme, setTheme] = useState(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'dark';
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    return 'dark';
   });
 
   useEffect(() => {
@@ -43,13 +48,17 @@ function App() {
     },
   };
 
-  const currentTheme = themes[theme as keyof typeof themes];
+  const currentTheme = themes[theme];
 
   // Tab system state
   const [tabs, setTabs] = useState<Tab[]>(() => {
     const savedTabs = localStorage.getItem('tabs');
     if (savedTabs) {
-      return JSON.parse(savedTabs);
+      try {
+        return JSON.parse(savedTabs);
+      } catch {
+        return [{ id: 'tab-1', name: 'Tab 1', json: '', isCollapsed: false }];
+      }
     }
     return [{ id: 'tab-1', name: 'Tab 1', json: '', isCollapsed: false }];
   });
@@ -411,4 +420,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
