@@ -19,6 +19,7 @@ const themes = {
     border: '#2c313a',
     text: '#e6eaf3',
     subtleText: '#abb2bf',
+    error: '#e06c75',
   },
   light: {
     background: '#f8f9fa',
@@ -26,6 +27,7 @@ const themes = {
     border: '#dee2e6',
     text: '#212529',
     subtleText: '#6c757d',
+    error: '#dc3545',
   },
 };
 
@@ -78,6 +80,7 @@ function App() {
         setCleanJson(JSON.stringify(JSON.parse(activeTab.json), null, 2));
         setJsonError(null);
       } catch (e) {
+        console.error('Invalid JSON:', e);
         setCleanJson('');
         setJsonError('Invalid JSON: Please check your input.');
       }
