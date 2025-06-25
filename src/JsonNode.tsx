@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 
 interface JsonNodeProps {
   data: any;
-  isRoot?: boolean;
+  isRoot?: boolean;  // Added missing isRoot property
   isCollapsed?: boolean;
   onCollapseChange?: (isCollapsed: boolean) => void;
   theme?: string;
 }
 
-const JsonNode = ({ data, isRoot = false, isCollapsed: parentIsCollapsed = false, onCollapseChange, theme = 'dark' }: JsonNodeProps) => {
+const JsonNode = ({ data, isCollapsed: parentIsCollapsed = false, onCollapseChange, theme = 'dark' }: JsonNodeProps) => {
   const [isCollapsed, setIsCollapsed] = useState(parentIsCollapsed);
 
   useEffect(() => {
@@ -24,7 +24,19 @@ const JsonNode = ({ data, isRoot = false, isCollapsed: parentIsCollapsed = false
     }
   };
 
-  const themes = {
+  // Define the theme structure first
+  const themeStructure = {
+    brace: '',
+    key: '',
+    string: '',
+    number: '',
+    boolean: '',
+    null: '',
+    text: '',
+    border: '',
+  };
+
+  const themes: Record<'dark' | 'light', typeof themeStructure> = {
     dark: {
       brace: '#bfc7d5',
       key: '#c678dd',
@@ -47,7 +59,9 @@ const JsonNode = ({ data, isRoot = false, isCollapsed: parentIsCollapsed = false
     },
   };
 
-  const currentTheme = themes[theme];
+  // Force 'theme' to be only 'dark' or 'light'
+  const safeTheme = (theme === 'dark' || theme === 'light') ? theme : 'dark';
+  const currentTheme = themes[safeTheme];
 
   const nodeStyle = {
     fontFamily: '"Fira Mono", Menlo, monospace',
