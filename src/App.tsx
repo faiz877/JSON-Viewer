@@ -19,8 +19,6 @@ const themes = {
     border: '#2c313a',
     text: '#e6eaf3',
     subtleText: '#abb2bf',
-    accent: '#61afef',
-    error: '#e06c75',
   },
   light: {
     background: '#f8f9fa',
@@ -28,8 +26,6 @@ const themes = {
     border: '#dee2e6',
     text: '#212529',
     subtleText: '#6c757d',
-    accent: '#007bff',
-    error: '#dc3545',
   },
 };
 
