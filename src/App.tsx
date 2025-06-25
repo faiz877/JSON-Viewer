@@ -55,6 +55,7 @@ function App() {
   });
 
   const [cleanJson, setCleanJson] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   // --- DERIVED STATE & EFFECTS ---
   const currentTheme = themes[theme];
@@ -75,12 +76,14 @@ function App() {
     if (activeTab && activeTab.json) {
       try {
         setCleanJson(JSON.stringify(JSON.parse(activeTab.json), null, 2));
+        setJsonError(null);
       } catch (e) {
-        console.error(e);
         setCleanJson('');
+        setJsonError('Invalid JSON: Please check your input.');
       }
     } else {
       setCleanJson('');
+      setJsonError(null);
     }
   }, [activeTab]);
 
@@ -244,7 +247,13 @@ function App() {
             id="json-output"
             style={{ flex: 1, width: '100%', minHeight: 0, height: '100%', padding: '1.5rem', fontFamily: '"Fira Mono", Menlo, monospace', fontSize: '1.1rem', background: 'transparent', color: currentTheme.text, overflow: 'auto' }}
           >
-            {cleanJson && activeTab ? <JsonNode data={JSON.parse(cleanJson)} isRoot={true} isCollapsed={activeTab.isCollapsed} onCollapseChange={handleCollapseChange} theme={theme} /> : <span style={{color: currentTheme.subtleText, padding: '1.5rem'}}>Formatted JSON will appear here</span>}
+            {jsonError ? (
+              <div style={{ color: currentTheme.error, fontWeight: 'bold' }}>{jsonError}</div>
+            ) : cleanJson && activeTab ? (
+              <JsonNode data={JSON.parse(cleanJson)} isRoot={true} isCollapsed={activeTab.isCollapsed} onCollapseChange={handleCollapseChange} theme={theme} />
+            ) : (
+              <span style={{color: currentTheme.subtleText, padding: '1.5rem'}}>Formatted JSON will appear here</span>
+            )}
           </div>
         </section>
       </main>
