@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react"
 import JsonNode from './JsonNode';
 
-import { useEffect, useState } from "react"
-import JsonNode from './JsonNode';
-
 interface Tab {
   id: string;
   name: string;
@@ -56,7 +53,7 @@ function App() {
     }
     return [{ id: 'tab-1', name: 'Tab 1', json: '', isCollapsed: false }];
   });
-  const [activeTabId, setActiveTabId] = useState(() => {
+  const [activeTabId, setActiveTabId] = useState<string | null>(() => {
     const savedActiveTabId = localStorage.getItem('activeTabId');
     return savedActiveTabId || 'tab-1';
   });
@@ -65,8 +62,10 @@ function App() {
   const activeTab = tabs.find(tab => tab.id === activeTabId) || tabs[0];
 
   useEffect(() => {
+    if (activeTabId) {
+      localStorage.setItem('activeTabId', activeTabId);
+    }
     localStorage.setItem('tabs', JSON.stringify(tabs));
-    localStorage.setItem('activeTabId', activeTabId);
   }, [tabs, activeTabId]);
 
   const handleJsonChange = (json: string) => {
@@ -188,7 +187,7 @@ function App() {
         userSelect: 'none',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', flexGrow: 1, padding: '0.2rem 0' }}>
-          {tabs.map(tab => (
+          {tabs.map((tab: Tab) => (
             <div
               key={tab.id}
               onClick={() => setActiveTabId(tab.id)}
@@ -392,20 +391,20 @@ function App() {
         }
         nav > div::-webkit-scrollbar {
             height: 4px;
-            background: currentTheme.secondaryBackground;
+            background: ${currentTheme.secondaryBackground};
         }
         nav > div::-webkit-scrollbar-thumb {
-            background: currentTheme.border;
+            background: ${currentTheme.border};
             border-radius: 4px;
         }
         textarea::-webkit-scrollbar, #json-output::-webkit-scrollbar {
           width: 14px;
-          background: currentTheme.secondaryBackground;
+          background: ${currentTheme.secondaryBackground};
         }
         textarea::-webkit-scrollbar-thumb, #json-output::-webkit-scrollbar-thumb {
-          background: currentTheme.border;
+          background: ${currentTheme.border};
           border-radius: 14px;
-          border: 4px solid currentTheme.secondaryBackground;
+          border: 4px solid ${currentTheme.secondaryBackground};
         }
       `}</style>
     </div>
