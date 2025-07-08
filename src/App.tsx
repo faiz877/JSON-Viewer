@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import JsonNode from './JsonNode';
+import Toolbar from './Toolbar';
+import TransformModal from './TransformModal';
+import CsvModal from './CsvModal';
 
 // --- TYPE DEFINITIONS ---
 interface Tab {
@@ -33,12 +36,22 @@ const themes = {
 
 // --- COMPONENT ---
 function App() {
-  // --- STATE MANAGEMENT ---
+  
+  // didnt really understand why the type Theme was there, whats the point of that?
+  // also what is objects, or what i am assuming to be objects and also, how is it diff from arrays and why do we see it everywhere
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
     return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
   });
 
+  // what is an interface - basically a data type with custom instructions, im saying hey, whenever you make something of type Tab
+  // always have ID, name, json , collapsed - atleast thats what i think it is
+  // dont understand the () inside useState
+  // anonymous functions, still dont get them
+  // why is saved tabs 
+  // i think its there to render whatever was previosuly there before closing it
+  // what does JSON.parse do?
+  // what does parse even mean?
   const [tabs, setTabs] = useState<Tab[]>(() => {
     const savedTabs = localStorage.getItem('tabs');
     if (savedTabs) {
@@ -51,13 +64,24 @@ function App() {
     return [{ id: 'tab-1', name: 'Tab 1', json: '', isCollapsed: false }];
   });
 
+  // why is useState actually used? not just definition? why? why not just any variable?
+  // basically to see what the active tab is
+  // but why?
+  // it opens that last active Tab
+  // thats why its used
+  // why the conditional operator on the tabs.length part
   const [activeTabId, setActiveTabId] = useState<string | null>(() => {
     const savedActiveTabId = localStorage.getItem('activeTabId');
     return savedActiveTabId || (tabs.length > 0 ? tabs[0].id : null);
+    // the code below works, i wanna know for what condition or edge case it wont work , cause thats why it seems like its there for
+    //return savedActiveTabId || null;
   });
 
   const [cleanJson, setCleanJson] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [showTransformModal, setShowTransformModal] = useState(false);
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvData, setCsvData] = useState('');
 
   // --- DERIVED STATE & EFFECTS ---
   const currentTheme = themes[theme];
@@ -130,6 +154,59 @@ function App() {
     setTabs(newTabs);
   };
 
+  const handleMinify = () => {
+    if (activeTab && activeTab.json) {
+      try {
+        const minifiedJson = JSON.stringify(JSON.parse(activeTab.json));
+        handleJsonChange(minifiedJson);
+      } catch (e) {
+        setJsonError('Invalid JSON for minifying.');
+      }
+    }
+  };
+
+  const handleCsv = () => {
+    if (activeTab && activeTab.json) {
+      try {
+        const data = JSON.parse(activeTab.json);
+        if (!Array.isArray(data)) {
+          setJsonError('CSV conversion only supports an array of objects.');
+          return;
+        }
+        const headers = Object.keys(data[0]).join(',');
+        const rows = data.map(row =>
+          Object.values(row).map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
+        );
+        const csv = [headers, ...rows].join('\n');
+        setCsvData(csv);
+        setShowCsvModal(true);
+      } catch (e) {
+        setJsonError('Invalid JSON for CSV conversion.');
+      }
+    }
+  };
+
+  const handleTransform = () => {
+    if (activeTab && activeTab.json) {
+      setShowTransformModal(true);
+    }
+  };
+
+  const handleTransformSubmit = (transformFunc: string) => {
+    if (activeTab && activeTab.json) {
+      try {
+        const data = JSON.parse(activeTab.json);
+        const transform = new Function(`return ${transformFunc}`)();
+        const transformedData = transform(data);
+        handleJsonChange(JSON.stringify(transformedData, null, 2));
+        setShowTransformModal(false);
+      } catch (e) {
+        setJsonError('Invalid transform function or JSON.');
+        setShowTransformModal(false);
+      }
+    }
+  };
+
   // --- RENDER ---
   return (
     <div style={{
@@ -161,6 +238,9 @@ function App() {
         justifyContent: 'center',
         position: 'relative',
       }}>
+        <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
+          <Toolbar theme={theme} onMinify={handleMinify} onCsv={handleCsv} onTransform={handleTransform} />
+        </div>
         JSON Viewer
         <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <a href="https://github.com/faiz877/JSON-Viewer" target="_blank" rel="noopener noreferrer" style={{ color: currentTheme.subtleText, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
@@ -225,7 +305,7 @@ function App() {
       </nav>
       <main style={{
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         gap: '1rem',
         width: '100%',
         padding: '1rem',
@@ -236,30 +316,46 @@ function App() {
         flex: '1 1 auto',
         overflow: 'hidden',
       }}>
-        <section style={{ flex: 1, minWidth: 0, background: currentTheme.secondaryBackground, display: 'flex', flexDirection: 'column', border: `1px solid ${currentTheme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-          <textarea
-            id="json-input"
-            value={activeTab ? activeTab.json : ''}
-            onChange={(e) => handleJsonChange(e.target.value)}
-            placeholder="Paste or type your JSON here..."
-            style={{ flex: 1, width: '100%', minHeight: 0, height: '100%', padding: '1.5rem', border: 'none', fontFamily: '"Fira Mono", Menlo, monospace', fontSize: '1.1rem', background: 'transparent', color: currentTheme.text, resize: 'none', outline: 'none', overflow: 'auto' }}
-          />
-        </section>
-        <section style={{ flex: 1, minWidth: 0, background: currentTheme.secondaryBackground, display: 'flex', flexDirection: 'column', border: `1px solid ${currentTheme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-          <div
-            id="json-output"
-            style={{ flex: 1, width: '100%', minHeight: 0, height: '100%', padding: '1.5rem', fontFamily: '"Fira Mono", Menlo, monospace', fontSize: '1.1rem', background: 'transparent', color: currentTheme.text, overflow: 'auto' }}
-          >
-            {jsonError ? (
-              <div style={{ color: currentTheme.error, fontWeight: 'bold' }}>{jsonError}</div>
-            ) : cleanJson && activeTab ? (
-              <JsonNode data={JSON.parse(cleanJson)} isRoot={true} isCollapsed={activeTab.isCollapsed} onCollapseChange={handleCollapseChange} theme={theme} />
-            ) : (
-              <span style={{color: currentTheme.subtleText, padding: '1.5rem'}}>Formatted JSON will appear here</span>
-            )}
-          </div>
-        </section>
+        <div style={{ display: 'flex', flex: 1, gap: '1rem', overflow: 'hidden' }}>
+          <section style={{ flex: 1, minWidth: 0, background: currentTheme.secondaryBackground, display: 'flex', flexDirection: 'column', border: `1px solid ${currentTheme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+            <textarea
+              id="json-input"
+              value={activeTab ? activeTab.json : ''}
+              onChange={(e) => handleJsonChange(e.target.value)}
+              placeholder="Paste or type your JSON here..."
+              style={{ flex: 1, width: '100%', minHeight: 0, height: '100%', padding: '1.5rem', border: 'none', fontFamily: '"Fira Mono", Menlo, monospace', fontSize: '1.1rem', background: 'transparent', color: currentTheme.text, resize: 'none', outline: 'none', overflow: 'auto' }}
+            />
+          </section>
+          <section style={{ flex: 1, minWidth: 0, background: currentTheme.secondaryBackground, display: 'flex', flexDirection: 'column', border: `1px solid ${currentTheme.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+            <div
+              id="json-output"
+              style={{ flex: 1, width: '100%', minHeight: 0, height: '100%', padding: '1.5rem', fontFamily: '"Fira Mono", Menlo, monospace', fontSize: '1.1rem', background: 'transparent', color: currentTheme.text, overflow: 'auto' }}
+            >
+              {jsonError ? (
+                <div style={{ color: currentTheme.error, fontWeight: 'bold' }}>{jsonError}</div>
+              ) : cleanJson && activeTab ? (
+                <JsonNode data={JSON.parse(cleanJson)} isRoot={true} isCollapsed={activeTab.isCollapsed} onCollapseChange={handleCollapseChange} theme={theme} />
+              ) : (
+                <span style={{color: currentTheme.subtleText, padding: '1.5rem'}}>Formatted JSON will appear here</span>
+              )}
+            </div>
+          </section>
+        </div>
       </main>
+      {showTransformModal && (
+        <TransformModal
+          theme={theme}
+          onClose={() => setShowTransformModal(false)}
+          onTransform={handleTransformSubmit}
+        />
+      )}
+      {showCsvModal && (
+        <CsvModal
+          theme={theme}
+          onClose={() => setShowCsvModal(false)}
+          csvData={csvData}
+        />
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
         html, body, #root { height: 100%; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; }
@@ -278,6 +374,27 @@ function App() {
         nav > div::-webkit-scrollbar-thumb { background: ${currentTheme.border}; border-radius: 4px; }
         textarea::-webkit-scrollbar, #json-output::-webkit-scrollbar { width: 14px; background: ${currentTheme.secondaryBackground}; }
         textarea::-webkit-scrollbar-thumb, #json-output::-webkit-scrollbar-thumb { background: ${currentTheme.border}; border-radius: 14px; border: 4px solid ${currentTheme.secondaryBackground}; }
+        .resizer-vertical {
+          width: 11px;
+          margin: 0 -5px;
+          border-left: 5px solid rgba(255, 255, 255, 0);
+          border-right: 5px solid rgba(255, 255, 255, 0);
+          cursor: col-resize;
+          background: ${currentTheme.border};
+          z-index: 1;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          -moz-background-clip: padding;
+          -webkit-background-clip: padding;
+          background-clip: padding-box;
+        }
+
+        .resizer-vertical:hover {
+          -webkit-transition: all 0.5s ease;
+          transition: all 0.5s ease;
+          background: #007bff;
+        }
       `}</style>
     </div>
   )
